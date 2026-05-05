@@ -1,0 +1,31 @@
+# Secrets — NEVER commit these
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Database (lives on your local machine)
+*.db
+*.db-shm
+*.db-wal
+
+# Thumbnails cache (regenerated automatically)
+.photovault/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Frontend build output (Phase 3)
+frontend/dist/
+frontend/node_modules/
