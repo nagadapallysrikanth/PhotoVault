@@ -15,8 +15,8 @@ from services import scanner_service
 from database import SessionLocal
 
 # ── Routers — import new ones here as phases are built ───
-from routers.v1 import photos
-# Phase 2: from routers.v1 import auth, upload
+from routers.v1 import photos, auth
+# Phase 4: from routers.v1 import share
 # Phase 4: from routers.v1 import share
 # Phase 6: from routers.v1 import wol
 # Phase 7: from routers.v1 import admin
@@ -34,8 +34,10 @@ async def lifespan(app: FastAPI):
     print(f"  📷  {settings.APP_NAME} starting up")
     print(f"{'─'*50}")
 
+    from services.startup_service import create_admin_if_needed
     # Init database (creates tables if they don't exist)
     init_db()
+    create_admin_if_needed(SessionLocal())
 
     # Init storage directories
     settings.thumbnail_dir.mkdir(parents=True, exist_ok=True)
@@ -97,8 +99,7 @@ app.add_middleware(
 # ─────────────────────────────────────────────────────────
 
 app.include_router(photos.router)
-# Phase 2: app.include_router(auth.router)
-# Phase 2: app.include_router(upload.router)
+app.include_router(auth.router)
 # Phase 4: app.include_router(share.router)
 # Phase 6: app.include_router(wol.router)
 # Phase 7: app.include_router(admin.router)

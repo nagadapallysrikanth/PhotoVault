@@ -39,6 +39,11 @@ class DriveType(str, enum.Enum):
     EXTERNAL = "external"
 
 
+class SharePermission(str, enum.Enum):
+    UPLOAD_ONLY     = "upload_only"      # Friends: upload only, no browsing
+    VIEW_AND_UPLOAD = "view_and_upload"  # Friends: view specific album + upload
+
+
 # ─────────────────────────────────────────────────────────
 # Users  (Phase 2)
 # ─────────────────────────────────────────────────────────
@@ -75,6 +80,30 @@ class LoginAttempt(Base):
     identifier = Column(String(255), index=True)  # IP or username
     attempted_at = Column(DateTime, default=datetime.utcnow)
     success    = Column(Boolean, default=False)
+
+
+# ─────────────────────────────────────────────────────────
+# Invite Links  (Phase 2 — family self-registration)
+# ─────────────────────────────────────────────────────────
+
+class InviteLink(Base):
+    __tablename__ = "invite_links"
+
+    id            = Column(Integer, primary_key=True)
+    token         = Column(String(64), unique=True, nullable=False, index=True)
+    label         = Column(String(255), nullable=True)   # e.g. "Mom's invite"
+    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    used_by_id    = Column(Integer, ForeignKey("users.id"), nullable=True)
+    expires_at    = Column(DateTime, nullable=False)
+    used_at       = Column(DateTime, nullable=True)
+    is_active     = Column(Boolean, default=True)
+    created_at    = Column(DateTime, default=datetime.utcnow)
+
+    created_by = relationship("User", foreign_keys=[created_by_id])
+    used_by    = relationship("User", foreign_keys=[used_by_id])
+
+    def __repr__(self):
+        return f"<InviteLink '{self.label}'>"
 
 
 # ─────────────────────────────────────────────────────────
@@ -196,7 +225,9 @@ class ShareLink(Base):
     token          = Column(String(64), unique=True, nullable=False, index=True)
     album_id       = Column(Integer, ForeignKey("albums.id"), nullable=False)
     created_by_id  = Column(Integer, ForeignKey("users.id"), nullable=False)
-    label          = Column(String(255), nullable=True)  # e.g. "John's BBQ July 2025"
+    label          = Column(String(255), nullable=True)
+    permissions    = Column(Enum(SharePermission),
+                            default=SharePermission.UPLOAD_ONLY, nullable=False)
     expires_at     = Column(DateTime, nullable=True)
     max_uploads    = Column(Integer, nullable=True)       # null = unlimited
     upload_count   = Column(Integer, default=0)

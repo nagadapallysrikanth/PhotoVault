@@ -12,8 +12,9 @@ from pathlib import Path
 from typing import Optional
 
 from database import get_db
-from models import Photo, Album
+from models import Photo, Album, User
 from services import scanner_service, thumbnail_service
+from middleware.auth_middleware import require_user, require_admin
 from config import settings
 
 router = APIRouter(prefix="/api/v1", tags=["photos"])
@@ -29,12 +30,13 @@ def list_photos(
     album_id:Optional[int] = None,
     year:    Optional[str] = None,
     month:   Optional[str] = None,
-    search:  Optional[str] = None,        # search filename or tags
+    search:  Optional[str] = None,
     sort:    str = Query("date", enum=["date", "name", "size"]),
     order:   str = Query("desc", enum=["asc", "desc"]),
     limit:   int = Query(100, le=500),
     offset:  int = Query(0, ge=0),
     db: Session = Depends(get_db),
+    _user: User = Depends(require_user),   # 🔐 login required
 ):
     """
     List photos with filtering, sorting, and pagination.
@@ -74,7 +76,8 @@ def list_photos(
 
 
 @router.get("/photos/{photo_id}/thumbnail")
-def get_thumbnail(photo_id: str, db: Session = Depends(get_db)):
+def get_thumbnail(photo_id: str, db: Session = Depends(get_db),
+                  _user: User = Depends(require_user)):   # 🔐
     """Serve a thumbnail — generates it on demand if missing."""
     photo = _get_photo_or_404(photo_id, db)
     thumb_path = thumbnail_service.get_thumbnail_path(photo_id)
@@ -90,7 +93,8 @@ def get_thumbnail(photo_id: str, db: Session = Depends(get_db)):
 
 
 @router.get("/photos/{photo_id}/original")
-def get_original(photo_id: str, db: Session = Depends(get_db)):
+def get_original(photo_id: str, db: Session = Depends(get_db),
+                 _user: User = Depends(require_user)):   # 🔐
     """Serve the full-resolution original photo."""
     photo = _get_photo_or_404(photo_id, db)
     filepath = Path(photo.filepath)
@@ -116,6 +120,7 @@ def get_original(photo_id: str, db: Session = Depends(get_db)):
 def list_albums(
     drive: Optional[str] = None,
     db: Session = Depends(get_db),
+    _user: User = Depends(require_user),   # 🔐
 ):
     """List all albums, optionally filtered by drive."""
     q = db.query(Album)
@@ -126,7 +131,8 @@ def list_albums(
 
 
 @router.get("/albums/{album_id}")
-def get_album(album_id: int, db: Session = Depends(get_db)):
+def get_album(album_id: int, db: Session = Depends(get_db),
+              _user: User = Depends(require_user)):   # 🔐
     """Get a single album with its photo count."""
     album = db.get(Album, album_id)
     if not album:
@@ -139,7 +145,8 @@ def get_album(album_id: int, db: Session = Depends(get_db)):
 # ─────────────────────────────────────────────────────────
 
 @router.get("/stats")
-def get_stats(db: Session = Depends(get_db)):
+def get_stats(db: Session = Depends(get_db),
+              _user: User = Depends(require_user)):   # 🔐
     """Overall library statistics — photo count, size, years, drives."""
     return scanner_service.get_stats(db)
 
@@ -149,6 +156,7 @@ def trigger_scan(
     background_tasks: BackgroundTasks,
     drive: Optional[str] = None,
     db: Session = Depends(get_db),
+    _admin: User = Depends(require_admin),   # 🔐 admin only
 ):
     """
     Trigger a drive scan in the background.

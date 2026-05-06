@@ -30,6 +30,11 @@ class Settings(BaseSettings):
         ".webp", ".heic", ".bmp", ".tiff"
     )
 
+    # ── Admin account (auto-created on first run) ─────────
+    ADMIN_USERNAME: str = "admin"
+    ADMIN_EMAIL:    str = "admin@photovault.local"
+    ADMIN_PASSWORD: str = "ChangeMe123"   # MUST change after first login
+
     # ── Security ──────────────────────────────────────────
     SECRET_KEY: str = "change-me"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
