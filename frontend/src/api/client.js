@@ -127,7 +127,10 @@ export const photoApi = {
     return `${BASE_URL}/photos/${id}/thumbnail${token ? `?token=${token}` : ''}`
   },
 
-  original: (id) => `${BASE_URL}/photos/${id}/original`,
+  original: (id) => {
+    const token = tokens.access
+    return `${BASE_URL}/photos/${id}/original${token ? `?token=${token}` : ''}`
+  },
 
   stats: () =>
     api.get('/stats').then(r => r.data),

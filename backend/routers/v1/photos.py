@@ -110,15 +110,28 @@ def get_thumbnail(
 
 
 @router.get("/photos/{photo_id}/original")
-def get_original(photo_id: str, db: Session = Depends(get_db),
-                 _user: User = Depends(require_user)):   # 🔐
-    """Serve the full-resolution original photo."""
+def get_original(
+    photo_id: str,
+    token: Optional[str] = None,
+    db: Session = Depends(get_db),
+    credentials=Depends(HTTPBearer(auto_error=False)),
+):
+    """Serve the full-resolution original. Accepts token via header or query param."""
+    from auth import decode_access_token
+    raw = token or (credentials.credentials if credentials else None)
+    if not raw:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    payload = decode_access_token(raw)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    user = db.get(User, int(payload["sub"]))
+    if not user or not user.is_active:
+        raise HTTPException(status_code=401, detail="User not found")
+
     photo = _get_photo_or_404(photo_id, db)
     filepath = Path(photo.filepath)
-
     if not filepath.exists():
         raise HTTPException(status_code=404, detail="File not found on disk")
-
     suffix = filepath.suffix.lower()
     media_types = {
         ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
