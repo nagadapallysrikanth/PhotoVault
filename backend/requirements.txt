@@ -4,7 +4,7 @@ uvicorn[standard]==0.29.0
 python-multipart==0.0.9        # file uploads
 
 # ── Database ────────────────────────────────────────────
-sqlalchemy==2.0.49
+sqlalchemy==2.0.30
 alembic==1.13.1                # DB migrations (Phase 2+)
 
 # ── Auth & Security (Phase 2) ───────────────────────────
@@ -13,7 +13,7 @@ passlib[bcrypt]==1.7.4             # password hashing
 slowapi==0.1.9                     # rate limiting
 
 # ── Image Processing ────────────────────────────────────
-Pillow==12.2.0                 # thumbnails, EXIF, resize
+Pillow==10.3.0                 # thumbnails, EXIF, resize
 
 # ── Config ──────────────────────────────────────────────
 pydantic-settings==2.2.1       # typed .env loading

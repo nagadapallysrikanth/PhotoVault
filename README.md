@@ -23,15 +23,14 @@ No subscriptions. No cloud. Your photos stay on your drives.
 ## ⚙️ Phase 1 Setup
 
 ### 1. Requirements
-- Python 3.14 or higher
+- Python 3.11 or higher
 - Windows 10/11 (or macOS/Linux)
 
 ### 2. Install Python dependencies
 
 ```bash
 cd backend
-py -3.14 -m pip install --upgrade pip setuptools wheel
-py -3.14 -m pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 ### 3. Configure your drives
@@ -158,7 +157,6 @@ git clone <your-repo>
 cd photovault
 copy .env.example .env   # edit with new drive paths
 cd backend
-py -3.14 -m pip install --upgrade pip setuptools wheel
-py -3.14 -m pip install -r requirements.txt
+pip install -r requirements.txt
 python main.py
 ```

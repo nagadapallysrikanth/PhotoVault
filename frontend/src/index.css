@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base ─────────────────────────────────────────────── */
+@layer base {
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-void text-cream font-body antialiased;
+    min-height: 100dvh;
+    overscroll-behavior: none;
+  }
+
+  ::-webkit-scrollbar         { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track   { @apply bg-void; }
+  ::-webkit-scrollbar-thumb   { @apply bg-ash rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-stone; }
+
+  ::selection { @apply bg-amber text-void; }
+}
+
+/* ── Components ───────────────────────────────────────── */
+@layer components {
+  /* Skeleton loading shimmer */
+  .skeleton {
+    @apply bg-ash animate-shimmer rounded;
+  }
+
+  /* Photo card hover effect */
+  .photo-card {
+    @apply relative overflow-hidden rounded-lg cursor-pointer;
+    @apply transition-transform duration-300 ease-out;
+  }
+  .photo-card:hover {
+    @apply scale-[1.02];
+  }
+  .photo-card:hover .photo-overlay {
+    @apply opacity-100;
+  }
+
+  .photo-overlay {
+    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
+    background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 60%);
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply bg-amber text-void font-body font-medium px-6 py-2.5 rounded-lg;
+    @apply hover:bg-ember active:scale-95 transition-all duration-150;
+    @apply disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply text-sand font-body font-medium px-4 py-2 rounded-lg;
+    @apply hover:text-cream hover:bg-ash transition-all duration-150;
+  }
+
+  .btn-danger {
+    @apply bg-rose/20 text-rose font-body font-medium px-4 py-2 rounded-lg;
+    @apply hover:bg-rose/30 transition-all duration-150;
+  }
+
+  /* Form inputs */
+  .input {
+    @apply w-full bg-ash border border-ash text-cream placeholder-stone;
+    @apply rounded-lg px-4 py-3 font-body text-sm;
+    @apply focus:outline-none focus:border-amber focus:ring-1 focus:ring-amber/30;
+    @apply transition-all duration-150;
+  }
+
+  /* Tag/badge */
+  .tag {
+    @apply inline-block bg-ash text-sand text-xs font-mono px-2 py-0.5 rounded;
+  }
+}
+
+/* ── Utilities ────────────────────────────────────────── */
+@layer utilities {
+  .safe-top    { padding-top: env(safe-area-inset-top); }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+  .safe-left   { padding-left: env(safe-area-inset-left); }
+  .safe-right  { padding-right: env(safe-area-inset-right); }
+
+  /* Masonry grid */
+  .masonry {
+    columns: 2;
+    column-gap: 0.75rem;
+  }
+  @media (min-width: 640px)  { .masonry { columns: 3; } }
+  @media (min-width: 1024px) { .masonry { columns: 4; } }
+  @media (min-width: 1280px) { .masonry { columns: 5; } }
+
+  .masonry-item {
+    break-inside: avoid;
+    margin-bottom: 0.75rem;
+  }
+}
+
+/* ── Lightbox ─────────────────────────────────────────── */
+.lightbox-enter {
+  animation: lightboxIn 0.25s ease forwards;
+}
+.lightbox-exit {
+  animation: lightboxOut 0.2s ease forwards;
+}
+@keyframes lightboxIn {
+  from { opacity: 0; backdrop-filter: blur(0px); }
+  to   { opacity: 1; backdrop-filter: blur(20px); }
+}
+@keyframes lightboxOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* ── Mobile touch improvements ───────────────────────── */
+@media (hover: none) {
+  .photo-card:hover { transform: none; }
+  .photo-overlay    { opacity: 1; }
+}

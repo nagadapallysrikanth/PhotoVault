@@ -6,6 +6,7 @@ Version prefix /api/v1 ensures backward compatibility in the future.
 
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from fastapi.responses import FileResponse
+from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 from pathlib import Path
@@ -76,19 +77,35 @@ def list_photos(
 
 
 @router.get("/photos/{photo_id}/thumbnail")
-def get_thumbnail(photo_id: str, db: Session = Depends(get_db),
-                  _user: User = Depends(require_user)):   # 🔐
-    """Serve a thumbnail — generates it on demand if missing."""
+def get_thumbnail(
+    photo_id: str,
+    token: Optional[str] = None,
+    db: Session = Depends(get_db),
+    credentials=Depends(HTTPBearer(auto_error=False)),
+):
+    """
+    Serve a thumbnail.
+    Accepts auth via Bearer header OR ?token= query param.
+    Query param needed because img tags cannot send auth headers.
+    """
+    from auth import decode_access_token
+    raw = token or (credentials.credentials if credentials else None)
+    if not raw:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    payload = decode_access_token(raw)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    user = db.get(User, int(payload["sub"]))
+    if not user or not user.is_active:
+        raise HTTPException(status_code=401, detail="User not found")
     photo = _get_photo_or_404(photo_id, db)
     thumb_path = thumbnail_service.get_thumbnail_path(photo_id)
-
     if not thumb_path.exists():
         ok = thumbnail_service.generate_thumbnail(photo.filepath, photo_id)
         if not ok:
             raise HTTPException(status_code=500, detail="Thumbnail generation failed")
         photo.thumbnail_ready = True
         db.commit()
-
     return FileResponse(str(thumb_path), media_type="image/jpeg")
 
 
