@@ -6,11 +6,29 @@
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
+import api from '../api/client'
 
 export default function Navbar({ onScan, scanning }) {
   const { user, logout, isAdmin } = useAuth()
   const navigate                  = useNavigate()
   const [menuOpen, setMenuOpen]   = useState(false)
+  const [waking,   setWaking]     = useState(false)
+  const [wolMsg,   setWolMsg]     = useState('')
+
+  async function handleWake() {
+    setWaking(true)
+    setWolMsg('')
+    try {
+      const res = await api.post('/wol/wake')
+      setWolMsg(res.data.message)
+      setTimeout(() => setWolMsg(''), 5000)
+    } catch (e) {
+      setWolMsg('Wake failed — check WOL config')
+      setTimeout(() => setWolMsg(''), 4000)
+    } finally {
+      setWaking(false)
+    }
+  }
 
   async function handleLogout() {
     await logout()
@@ -19,6 +37,12 @@ export default function Navbar({ onScan, scanning }) {
 
   return (
     <header className="sticky top-0 z-40 bg-void/90 backdrop-blur-md border-b border-ash safe-top">
+      {/* WOL status message */}
+      {wolMsg && (
+        <div className="bg-amber/10 border-b border-amber/20 text-amber text-xs px-4 py-1.5 text-center animate-fade-in">
+          {wolMsg}
+        </div>
+      )}
       <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
 
         {/* Logo */}
@@ -32,6 +56,23 @@ export default function Navbar({ onScan, scanning }) {
 
         {/* Desktop nav */}
         <nav className="hidden sm:flex items-center gap-1">
+          <a href="/upload" className="btn-ghost text-sm flex items-center gap-1.5">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round"
+                d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+            </svg>
+            Upload
+          </a>
+          {isAdmin && (
+            <a href="/admin" className="btn-ghost text-sm flex items-center gap-1.5">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round"
+                  d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Admin
+            </a>
+          )}
           {isAdmin && (
             <button
               onClick={onScan}
@@ -45,6 +86,18 @@ export default function Navbar({ onScan, scanning }) {
               {scanning ? 'Scanning...' : 'Scan Drives'}
             </button>
           )}
+          <button
+            onClick={handleWake}
+            disabled={waking}
+            className="btn-ghost text-sm flex items-center gap-1.5"
+            title="Wake home PC"
+          >
+            <svg className={`w-4 h-4 ${waking ? 'animate-pulse text-amber' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round"
+                d="M5.636 5.636a9 9 0 1012.728 0M12 3v9" />
+            </svg>
+            {waking ? 'Waking...' : 'Wake PC'}
+          </button>
           <div className="w-px h-5 bg-ash mx-1" />
           <div className="flex items-center gap-2 pl-1">
             <div className="w-7 h-7 rounded-full bg-ash flex items-center justify-center">

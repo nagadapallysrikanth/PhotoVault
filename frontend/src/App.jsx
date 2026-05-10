@@ -8,11 +8,12 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 
-import Login    from './pages/Login'
-import Register from './pages/Register'
-import Gallery  from './pages/Gallery'
-// Phase 4: import Upload from './pages/Upload'
-// Phase 7: import Admin from './pages/Admin'
+import Login       from './pages/Login'
+import Register    from './pages/Register'
+import Gallery     from './pages/Gallery'
+import Upload      from './pages/Upload'
+import GuestUpload from './pages/GuestUpload'
+import Admin       from './pages/Admin'
 
 export default function App() {
   return (
@@ -23,13 +24,19 @@ export default function App() {
           <Route path="/login"    element={<Login />} />
           <Route path="/register" element={<Register />} />
 
+          {/* Public — friend upload (no login) */}
+          <Route path="/upload/:token" element={<GuestUpload />} />
+
           {/* Protected — require login */}
           <Route path="/" element={
             <ProtectedRoute><Gallery /></ProtectedRoute>
           } />
-
-          {/* Phase 4: friend upload page (public, token-gated) */}
-          {/* <Route path="/upload/:token" element={<Upload />} /> */}
+          <Route path="/upload" element={
+            <ProtectedRoute><Upload /></ProtectedRoute>
+          } />
+          <Route path="/admin" element={
+            <ProtectedRoute><Admin /></ProtectedRoute>
+          } />
 
           {/* Phase 7: admin panel */}
           {/* <Route path="/admin" element={
