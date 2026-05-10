@@ -92,7 +92,8 @@ class Settings(BaseSettings):
         return self.MAX_UPLOAD_MB * 1024 * 1024
 
     class Config:
-        env_file = ".env"
+        # Always load .env from the repository root, regardless of current working directory.
+        env_file = str(Path(__file__).resolve().parent.parent / ".env")
         env_file_encoding = "utf-8"
         extra = "ignore"
 

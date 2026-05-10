@@ -76,4 +76,4 @@ def get_db():
 
 def init_db():
     Base.metadata.create_all(bind=engine)
-    print(f"  ✓ Database ready: {DB_PATH}")
+    print(f"  [OK] Database ready: {DB_PATH}")

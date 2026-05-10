@@ -21,7 +21,7 @@ def create_admin_if_needed(db: Session):
     if existing:
         return  # already set up
 
-    print("  → First run detected — creating admin account...")
+    print("  -> First run detected — creating admin account...")
 
     admin = User(
         username      = settings.ADMIN_USERNAME,
@@ -33,5 +33,5 @@ def create_admin_if_needed(db: Session):
     db.add(admin)
     db.commit()
 
-    print(f"  ✓ Admin account created: '{settings.ADMIN_USERNAME}'")
-    print(f"  ⚠  Change this password after first login!")
+    print(f"  [OK] Admin account created: '{settings.ADMIN_USERNAME}'")
+    print(f"  [!] Change this password after first login!")

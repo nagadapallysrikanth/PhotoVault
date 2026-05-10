@@ -14,6 +14,8 @@ import Gallery     from './pages/Gallery'
 import Upload      from './pages/Upload'
 import GuestUpload from './pages/GuestUpload'
 import Admin       from './pages/Admin'
+import Albums      from './pages/Albums'
+import Trash       from './pages/Trash'
 
 export default function App() {
   return (
@@ -36,6 +38,12 @@ export default function App() {
           } />
           <Route path="/admin" element={
             <ProtectedRoute><Admin /></ProtectedRoute>
+          } />
+          <Route path="/albums" element={
+            <ProtectedRoute><Albums /></ProtectedRoute>
+          } />
+          <Route path="/trash" element={
+            <ProtectedRoute><Trash /></ProtectedRoute>
           } />
 
           {/* Phase 7: admin panel */}

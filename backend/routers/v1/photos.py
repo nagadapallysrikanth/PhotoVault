@@ -8,12 +8,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
 from pathlib import Path
 from typing import Optional
 
 from database import get_db
-from models import Photo, Album, User
+from models import Photo, User
 from services import scanner_service, thumbnail_service
 from middleware.auth_middleware import require_user, require_admin
 from config import settings
@@ -31,7 +30,9 @@ def list_photos(
     album_id:Optional[int] = None,
     year:    Optional[str] = None,
     month:   Optional[str] = None,
-    search:  Optional[str] = None,
+    search:   Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to:   Optional[str] = None,
     sort:    str = Query("date", enum=["date", "name", "size"]),
     order:   str = Query("desc", enum=["asc", "desc"]),
     limit:   int = Query(100, le=500),
@@ -43,7 +44,7 @@ def list_photos(
     List photos with filtering, sorting, and pagination.
     All params are optional — no params returns all photos.
     """
-    q = db.query(Photo)
+    q = db.query(Photo).filter(Photo.is_trashed == False)
 
     if drive:
         q = q.filter(Photo.drive == drive)
@@ -55,6 +56,12 @@ def list_photos(
         q = q.filter(Photo.month == month)
     if search:
         q = q.filter(Photo.filename.ilike(f"%{search}%"))
+    if date_from:
+        from datetime import datetime as dt
+        q = q.filter(Photo.taken_at >= dt.fromisoformat(date_from))
+    if date_to:
+        from datetime import datetime as dt
+        q = q.filter(Photo.taken_at <= dt.fromisoformat(date_to))
 
     # Sort
     sort_col = {
@@ -143,34 +150,6 @@ def get_original(
 
 
 # ─────────────────────────────────────────────────────────
-# Albums
-# ─────────────────────────────────────────────────────────
-
-@router.get("/albums")
-def list_albums(
-    drive: Optional[str] = None,
-    db: Session = Depends(get_db),
-    _user: User = Depends(require_user),   # 🔐
-):
-    """List all albums, optionally filtered by drive."""
-    q = db.query(Album)
-    if drive:
-        q = q.filter(Album.drive == drive)
-    albums = q.order_by(Album.name).all()
-    return [_album_dict(a, db) for a in albums]
-
-
-@router.get("/albums/{album_id}")
-def get_album(album_id: int, db: Session = Depends(get_db),
-              _user: User = Depends(require_user)):   # 🔐
-    """Get a single album with its photo count."""
-    album = db.get(Album, album_id)
-    if not album:
-        raise HTTPException(status_code=404, detail="Album not found")
-    return _album_dict(album, db)
-
-
-# ─────────────────────────────────────────────────────────
 # Library stats + scan trigger
 # ─────────────────────────────────────────────────────────
 
@@ -216,6 +195,43 @@ def _run_scan(drive: Optional[str]):
 # Helpers
 # ─────────────────────────────────────────────────────────
 
+@router.patch("/photos/{photo_id}/caption")
+def update_caption(
+    photo_id: str,
+    caption:  str,
+    db:       Session = Depends(get_db),
+    _user:    User    = Depends(require_user),
+):
+    """Update the caption for a photo."""
+    photo = _get_photo_or_404(photo_id, db)
+    photo.caption = caption.strip() or None
+    db.commit()
+    return {"photo_id": photo_id, "caption": photo.caption}
+
+
+@router.get("/photos/{photo_id}/exif")
+def get_exif(
+    photo_id: str,
+    db:       Session = Depends(get_db),
+    _user:    User    = Depends(require_user),
+):
+    """Return full EXIF metadata for a photo."""
+    photo = _get_photo_or_404(photo_id, db)
+    try:
+        from PIL import Image, ExifTags
+        exif_data = {}
+        with Image.open(photo.filepath) as img:
+            raw = img._getexif()
+            if raw:
+                for tag_id, value in raw.items():
+                    tag = ExifTags.TAGS.get(tag_id, str(tag_id))
+                    if isinstance(value, (str, int, float)):
+                        exif_data[tag] = value
+        return {"photo_id": photo_id, "exif": exif_data}
+    except Exception as e:
+        return {"photo_id": photo_id, "exif": {}, "error": str(e)}
+
+
 def _get_photo_or_404(photo_id: str, db: Session) -> Photo:
     photo = db.get(Photo, photo_id)
     if not photo:
@@ -238,16 +254,8 @@ def _photo_dict(p: Photo) -> dict:
         "thumbnail_ready": p.thumbnail_ready,
         "thumbnail_url":   f"/api/v1/photos/{p.id}/thumbnail",
         "original_url":    f"/api/v1/photos/{p.id}/original",
+        "caption":         p.caption,
+        "is_trashed":      p.is_trashed,
     }
 
 
-def _album_dict(a: Album, db: Session) -> dict:
-    count = db.query(Photo).filter(Photo.album_id == a.id).count()
-    return {
-        "id":          a.id,
-        "name":        a.name,
-        "drive":       a.drive,
-        "description": a.description,
-        "photo_count": count,
-        "created_at":  a.created_at.isoformat() if a.created_at else None,
-    }

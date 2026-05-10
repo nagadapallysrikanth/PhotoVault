@@ -156,8 +156,11 @@ class Photo(Base):
 
     # Processing state
     thumbnail_ready  = Column(Boolean, default=False)
-    ai_tagged        = Column(Boolean, default=False)   # Phase 8
-    face_scanned     = Column(Boolean, default=False)   # Phase 8
+    ai_tagged        = Column(Boolean, default=False)
+    face_scanned     = Column(Boolean, default=False)
+    is_trashed       = Column(Boolean, default=False, index=True)
+    trashed_at       = Column(DateTime, nullable=True)
+    caption          = Column(Text, nullable=True)
 
     created_at       = Column(DateTime, default=datetime.utcnow)
 
