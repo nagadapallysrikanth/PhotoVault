@@ -15,8 +15,8 @@ from services import scanner_service
 from database import SessionLocal
 
 # ── Routers — import new ones here as phases are built ───
-from routers.v1 import photos, auth, upload, share
-# Phase 6: from routers.v1 import wol
+from routers.v1 import photos, auth, upload, share, wol
+# Phase 7: from routers.v1 import admin
 # Phase 4: from routers.v1 import share
 # Phase 6: from routers.v1 import wol
 # Phase 7: from routers.v1 import admin
@@ -102,7 +102,8 @@ app.include_router(photos.router)
 app.include_router(auth.router)
 app.include_router(upload.router)
 app.include_router(share.router)
-# Phase 6: app.include_router(wol.router)
+app.include_router(wol.router)
+# Phase 7: app.include_router(admin.router)
 # Phase 6: app.include_router(wol.router)
 # Phase 7: app.include_router(admin.router)
 # Phase 8: app.include_router(ai_tagging.router)
