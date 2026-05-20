@@ -10,6 +10,7 @@ alembic==1.13.1                # DB migrations (Phase 2+)
 # ── Auth & Security (Phase 2) ───────────────────────────
 python-jose[cryptography]==3.3.0   # JWT tokens
 passlib[bcrypt]==1.7.4             # password hashing
+bcrypt==3.2.2                          # compatible bcrypt version for passlib 1.7.4
 slowapi==0.1.9                     # rate limiting
 
 # ── Image Processing ────────────────────────────────────

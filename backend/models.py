@@ -117,7 +117,7 @@ class Album(Base):
     name           = Column(String(255), nullable=False)
     drive          = Column(Enum(DriveType), nullable=False)
     description    = Column(Text, nullable=True)
-    cover_photo_id = Column(Integer, ForeignKey("photos.id"), nullable=True)
+    cover_photo_id = Column(String(32), ForeignKey("photos.id"), nullable=True)
     created_by_id  = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at     = Column(DateTime, default=datetime.utcnow)
     is_private     = Column(Boolean, default=False)
@@ -161,6 +161,7 @@ class Photo(Base):
     is_trashed       = Column(Boolean, default=False, index=True)
     trashed_at       = Column(DateTime, nullable=True)
     caption          = Column(Text, nullable=True)
+    clip_embedding   = Column(Text, nullable=True)   # Phase 8: CLIP vector (JSON)
 
     created_at       = Column(DateTime, default=datetime.utcnow)
 

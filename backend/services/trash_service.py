@@ -24,33 +24,44 @@ def move_to_trash(photo: Photo, db: Session) -> bool:
     """
     try:
         drive_path = settings.drives.get(photo.drive.value)
+        print(f"drive_path for {photo.drive.value}: {drive_path}")
         if not drive_path:
+            print("drive_path is None")
             return False
 
-        src = Path(photo.filepath)
+        trash_dir = drive_path / ".Trash"
+        print(f"trash_dir: {trash_dir}")
+        trash_dir.mkdir(exist_ok=True)
+        print("mkdir done")
+
+        src  = Path(photo.filepath)
+        dest = trash_dir / src.name
+
+        # Avoid name collision in trash
+        if dest.exists():
+            stem, ext = src.stem, src.suffix
+            counter = 1
+            while dest.exists():
+                dest = trash_dir / f"{stem}_{counter}{ext}"
+                counter += 1
+
+        print(f"src exists: {src.exists()}")
         if src.exists():
-            trash_dir = drive_path / ".Trash"
-            trash_dir.mkdir(exist_ok=True)
-
-            dest = trash_dir / src.name
-            if dest.exists():
-                stem, ext = src.stem, src.suffix
-                counter = 1
-                while dest.exists():
-                    dest = trash_dir / f"{stem}_{counter}{ext}"
-                    counter += 1
-
             shutil.move(str(src), str(dest))
             photo.filepath = str(dest)
+        else:
+            # File already missing, just mark as trashed
+            pass
 
-        # Update DB (even if file was already missing from disk)
-        photo.trashed_at = datetime.now(timezone.utc)
-        photo.is_trashed = True
+        # Update DB
+        photo.trashed_at  = datetime.now(timezone.utc)
+        photo.is_trashed  = True
         db.commit()
+        print("committed")
         return True
 
     except Exception as e:
-        print(f"  ✗ Trash failed for {photo.filepath}: {e}")
+        print(f"  ✗ Trash failed for {photo.filename}: {e}")
         db.rollback()
         return False
 
@@ -140,7 +151,7 @@ def auto_delete_expired(db: Session) -> int:
             count += 1
 
     if count:
-        print(f"  [OK] Auto-deleted {count} expired trash items")
+        print(f"  ✓ Auto-deleted {count} expired trash items")
     return count
 
 

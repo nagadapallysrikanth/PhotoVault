@@ -8,11 +8,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from pathlib import Path
 from typing import Optional
 
 from database import get_db
-from models import Photo, User
+from models import Photo, Album, User
 from services import scanner_service, thumbnail_service
 from middleware.auth_middleware import require_user, require_admin
 from config import settings
@@ -116,6 +117,13 @@ def get_thumbnail(
     return FileResponse(str(thumb_path), media_type="image/jpeg")
 
 
+def _get_photo_or_404(photo_id: str, db: Session) -> Photo:
+    photo = db.get(Photo, photo_id)
+    if not photo:
+        raise HTTPException(status_code=404, detail="Photo not found")
+    return photo
+
+
 @router.get("/photos/{photo_id}/original")
 def get_original(
     photo_id: str,
@@ -147,6 +155,34 @@ def get_original(
     }
     media_type = media_types.get(suffix, "application/octet-stream")
     return FileResponse(str(filepath), media_type=media_type)
+
+
+# ─────────────────────────────────────────────────────────
+# Albums
+# ─────────────────────────────────────────────────────────
+
+@router.get("/albums")
+def list_albums(
+    drive: Optional[str] = None,
+    db: Session = Depends(get_db),
+    _user: User = Depends(require_user),   # 🔐
+):
+    """List all albums, optionally filtered by drive."""
+    q = db.query(Album)
+    if drive:
+        q = q.filter(Album.drive == drive)
+    albums = q.order_by(Album.name).all()
+    return [_album_dict(a, db) for a in albums]
+
+
+@router.get("/albums/{album_id}")
+def get_album(album_id: int, db: Session = Depends(get_db),
+              _user: User = Depends(require_user)):   # 🔐
+    """Get a single album with its photo count."""
+    album = db.get(Album, album_id)
+    if not album:
+        raise HTTPException(status_code=404, detail="Album not found")
+    return _album_dict(album, db)
 
 
 # ─────────────────────────────────────────────────────────
@@ -230,9 +266,6 @@ def get_exif(
         return {"photo_id": photo_id, "exif": exif_data}
     except Exception as e:
         return {"photo_id": photo_id, "exif": {}, "error": str(e)}
-
-
-def _get_photo_or_404(photo_id: str, db: Session) -> Photo:
     photo = db.get(Photo, photo_id)
     if not photo:
         raise HTTPException(status_code=404, detail="Photo not found")
@@ -259,3 +292,13 @@ def _photo_dict(p: Photo) -> dict:
     }
 
 
+def _album_dict(a: Album, db: Session) -> dict:
+    count = db.query(Photo).filter(Photo.album_id == a.id).count()
+    return {
+        "id":          a.id,
+        "name":        a.name,
+        "drive":       a.drive,
+        "description": a.description,
+        "photo_count": count,
+        "created_at":  a.created_at.isoformat() if a.created_at else None,
+    }

@@ -16,6 +16,8 @@ import GuestUpload from './pages/GuestUpload'
 import Admin       from './pages/Admin'
 import Albums      from './pages/Albums'
 import Trash       from './pages/Trash'
+import FaceManager from './pages/FaceManager'
+import Duplicates  from './pages/Duplicates'
 
 export default function App() {
   return (
@@ -44,6 +46,12 @@ export default function App() {
           } />
           <Route path="/trash" element={
             <ProtectedRoute><Trash /></ProtectedRoute>
+          } />
+          <Route path="/faces" element={
+            <ProtectedRoute><FaceManager /></ProtectedRoute>
+          } />
+          <Route path="/duplicates" element={
+            <ProtectedRoute><Duplicates /></ProtectedRoute>
           } />
 
           {/* Phase 7: admin panel */}

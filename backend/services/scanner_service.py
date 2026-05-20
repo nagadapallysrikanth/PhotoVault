@@ -62,12 +62,12 @@ def scan_drive(db: Session, drive_name: str, drive_path: Path) -> dict:
     }
 
     if not drive_path.is_dir():
-        print(f"  [ERR] Drive not available: [{drive_name}] {drive_path}")
+        print(f"  ✗ Drive not available: [{drive_name}] {drive_path}")
         return result
 
     result["available"] = True
     drive_type = DriveType(drive_name)
-    print(f"  -> Scanning [{drive_name}] {drive_path} ...")
+    print(f"  → Scanning [{drive_name}] {drive_path} ...")
 
     for root, dirs, files in os.walk(drive_path):
         # Skip hidden folders (e.g. .Trash)

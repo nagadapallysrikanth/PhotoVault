@@ -9,6 +9,7 @@ from sqlalchemy import func
 from pathlib import Path
 from typing import Optional
 import shutil
+import logging
 
 from database import get_db
 from models import Photo, Album, DriveType, User
@@ -306,11 +307,13 @@ def move_photos(
 # ─────────────────────────────────────────────────────────
 
 def _album_dict(album: Album, db: Session) -> dict:
+    print(f"Processing album {album.id}, cover_photo_id={album.cover_photo_id}", flush=True)
     count = (
         db.query(func.count(Photo.id))
         .filter(Photo.album_id == album.id, Photo.is_trashed == False)
         .scalar()
     )
+    print(f"Count: {count}", flush=True)
     # Get cover photo thumbnail URL
     cover_url = None
     if album.cover_photo_id:
@@ -324,8 +327,10 @@ def _album_dict(album: Album, db: Session) -> dict:
             .order_by(Photo.taken_at.desc())
             .first()
         )
+        print(f"First photo: {first}", flush=True)
         if first:
             cover_url = f"/api/v1/photos/{first.id}/thumbnail"
+        print(f"Album {album.id}: count={count}, first={first.id if first else None}, cover_url={cover_url}", flush=True)
 
     return {
         "id":          album.id,

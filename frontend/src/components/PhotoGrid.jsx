@@ -16,7 +16,6 @@ export default function PhotoGrid({ photos, loading, onPhotoClick, onSelectionCh
       const next = new Set(prev)
       next.has(id) ? next.delete(id) : next.add(id)
       if (next.size === 0) setSelectMode(false)
-      else setSelectMode(true)
       onSelectionChange?.(Array.from(next))
       return next
     })
@@ -98,7 +97,7 @@ function PhotoCard({ photo, index, isSelected, selectMode, onClick, onLongPress,
 
   return (
     <div
-      className={`group masonry-item photo-card animate-fade-in ${isSelected ? 'ring-2 ring-amber rounded-lg' : ''}`}
+      className={`masonry-item photo-card animate-fade-in ${isSelected ? 'ring-2 ring-amber rounded-lg' : ''}`}
       style={{ animationDelay: `${Math.min(index * 30, 300)}ms` }}
       onClick={onClick}
       onTouchStart={handleTouchStart}

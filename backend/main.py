@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+import logging
 
 from config import settings
 from database import init_db
@@ -15,7 +16,7 @@ from services import scanner_service
 from database import SessionLocal
 
 # ── Routers — import new ones here as phases are built ───
-from routers.v1 import photos, auth, upload, share, wol, admin, albums, trash
+from routers.v1 import photos, auth, upload, share, wol, admin, albums, trash, ai_tagging, faces, duplicates
 # Phase 4: from routers.v1 import share
 # Phase 6: from routers.v1 import wol
 # Phase 7: from routers.v1 import admin
@@ -29,9 +30,10 @@ from routers.v1 import photos, auth, upload, share, wol, admin, albums, trash
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Runs on startup and shutdown."""
-    print(f"\n{'-'*50}")
-    print(f"  PhotoVault starting up")
-    print(f"{'-'*50}")
+    logging.basicConfig(level=logging.INFO)
+    print(f"\n{'─'*50}")
+    print(f"  📷  {settings.APP_NAME} starting up")
+    print(f"{'─'*50}")
 
     from services.startup_service import create_admin_if_needed
     from services.trash_service import auto_delete_expired
@@ -47,27 +49,25 @@ async def lifespan(app: FastAPI):
     for name, path in settings.drives.items():
         try:
             path.mkdir(parents=True, exist_ok=True)
-            print(f"  [OK] Storage [{name}]: {path}")
+            print(f"  ✓ Storage [{name}]: {path}")
         except Exception as e:
-            print(f"  [ERR] Storage [{name}] not available: {e}")
+            print(f"  ✗ Storage [{name}] not available: {e}")
 
     # Auto-scan drives on startup (background — doesn't block server start)
-    print("  -> Auto-scanning drives for new photos...")
+    print("  → Auto-scanning drives for new photos...")
     db = SessionLocal()
     try:
         scanner_service.scan_all_drives(db)
     finally:
         db.close()
 
-    print(f"\n  Running at http://{settings.APP_HOST}:{settings.APP_PORT}")
-    print(f"  API docs at http://localhost:{settings.APP_PORT}/docs")
-    print(f"{'-'*50}\n")
+    print(f"\n  🚀  Running at http://{settings.APP_HOST}:{settings.APP_PORT}")
+    print(f"  📖  API docs at http://localhost:{settings.APP_PORT}/docs")
+    print(f"{'─'*50}\n")
 
     yield  # App is running
 
-    print(f"\n{'-'*50}")
-    print("  PhotoVault shutting down")
-    print(f"{'-'*50}\n")
+    print("\n  👋  PhotoVault shutting down\n")
 
 
 # ─────────────────────────────────────────────────────────
@@ -111,7 +111,9 @@ app.include_router(wol.router)
 app.include_router(admin.router)
 app.include_router(albums.router)
 app.include_router(trash.router)
-# Phase 8: app.include_router(ai_tagging.router)
+app.include_router(ai_tagging.router)
+app.include_router(faces.router)
+app.include_router(duplicates.router)
 # Phase 6: app.include_router(wol.router)
 # Phase 7: app.include_router(admin.router)
 # Phase 8: app.include_router(ai_tagging.router)

@@ -7,7 +7,7 @@ To switch from SQLite to PostgreSQL in the future:
   3. That's it — nothing else changes.
 """
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.orm import sessionmaker
 from pathlib import Path
 
@@ -74,6 +74,37 @@ def get_db():
 # Init — creates all tables if they don't exist
 # ─────────────────────────────────────────────────────────
 
+def upgrade_sqlite_schema():
+    """Add any missing SQLite columns for simple schema upgrades."""
+    if engine.dialect.name != "sqlite":
+        return
+
+    inspector = inspect(engine)
+    with engine.begin() as conn:
+        for table in Base.metadata.sorted_tables:
+            if table.name not in inspector.get_table_names():
+                continue
+
+            existing = {col["name"] for col in inspector.get_columns(table.name)}
+            for column in table.columns:
+                if column.name in existing:
+                    continue
+                if not column.nullable and column.default is None and column.server_default is None:
+                    print(f"  ⚠️  Skipping schema migration for {table.name}.{column.name} because it is required and has no default")
+                    continue
+
+                col_type = column.type.compile(engine.dialect)
+                sql = f'ALTER TABLE "{table.name}" ADD COLUMN "{column.name}" {col_type}'
+                if not column.nullable:
+                    sql += " NOT NULL"
+                if column.server_default is not None:
+                    sql += f" DEFAULT {column.server_default.arg}"
+
+                conn.execute(text(sql))
+                print(f"  ✓ Added missing column {table.name}.{column.name}")
+
+
 def init_db():
     Base.metadata.create_all(bind=engine)
-    print(f"  [OK] Database ready: {DB_PATH}")
+    upgrade_sqlite_schema()
+    print(f"  ✓ Database ready: {DB_PATH}")

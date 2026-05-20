@@ -69,7 +69,7 @@ export default function Gallery() {
     } finally {
       setLoading(false)
     }
-  }, [search, yearFil, albumFil, driveFil, dateFrom, dateTo])
+  }, [search, yearFil, albumFil, driveFil])
 
   useEffect(() => {
     const t = setTimeout(loadPhotos, search ? 400 : 0)
