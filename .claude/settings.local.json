@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(sc.exe stop Cloudflared)",
+      "PowerShell(sc.exe start Cloudflared)",
+      "PowerShell(sc.exe query Cloudflared)"
+    ]
+  }
+}

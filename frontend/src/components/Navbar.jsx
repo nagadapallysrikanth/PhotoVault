@@ -1,6 +1,6 @@
 /**
  * components/Navbar.jsx
- * Top navigation bar. Responsive — collapses on mobile.
+ * Top navigation bar. Responsive - collapses on mobile.
  */
 
 import { useState } from 'react'
@@ -23,7 +23,7 @@ export default function Navbar({ onScan, scanning }) {
       setWolMsg(res.data.message)
       setTimeout(() => setWolMsg(''), 5000)
     } catch (e) {
-      setWolMsg('Wake failed — check WOL config')
+      setWolMsg('Wake failed - check WOL config')
       setTimeout(() => setWolMsg(''), 4000)
     } finally {
       setWaking(false)
@@ -162,15 +162,63 @@ export default function Navbar({ onScan, scanning }) {
                 <p className="text-stone text-xs capitalize">{user?.role}</p>
               </div>
             </div>
+            <a
+              href="/albums"
+              onClick={() => setMenuOpen(false)}
+              className="block w-full text-left btn-ghost text-sm py-2.5"
+            >
+              Albums
+            </a>
+            <a
+              href="/upload"
+              onClick={() => setMenuOpen(false)}
+              className="block w-full text-left btn-ghost text-sm py-2.5"
+            >
+              Upload
+            </a>
+            {isAdmin && (
+              <a
+                href="/admin"
+                onClick={() => setMenuOpen(false)}
+                className="block w-full text-left btn-ghost text-sm py-2.5"
+              >
+                Admin
+              </a>
+            )}
+            {isAdmin && (
+              <a
+                href="/faces"
+                onClick={() => setMenuOpen(false)}
+                className="block w-full text-left btn-ghost text-sm py-2.5"
+              >
+                Faces
+              </a>
+            )}
+            {isAdmin && (
+              <a
+                href="/duplicates"
+                onClick={() => setMenuOpen(false)}
+                className="block w-full text-left btn-ghost text-sm py-2.5"
+              >
+                Duplicates
+              </a>
+            )}
             {isAdmin && (
               <button
                 onClick={() => { onScan(); setMenuOpen(false) }}
                 disabled={scanning}
                 className="w-full text-left btn-ghost text-sm py-2.5"
               >
-                {scanning ? '🔄 Scanning...' : '🔍 Scan Drives'}
+                {scanning ? 'Scanning...' : 'Scan Drives'}
               </button>
             )}
+            <button
+              onClick={() => { handleWake(); setMenuOpen(false) }}
+              disabled={waking}
+              className="w-full text-left btn-ghost text-sm py-2.5"
+            >
+              {waking ? 'Waking...' : 'Wake PC'}
+            </button>
             <button
               onClick={handleLogout}
               className="w-full text-left btn-ghost text-sm py-2.5 text-rose"

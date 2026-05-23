@@ -7,7 +7,7 @@ Adding a new feature: create a router file, import it here. That's it.
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 import logging
 
 from config import settings
@@ -91,6 +91,8 @@ app.add_middleware(
         "http://localhost:3000",    # React dev server
         "http://localhost:5000",
         "http://127.0.0.1:5000",
+        "https://radhatales.com",
+        "https://www.radhatales.com",
         # Phase 5: add your Cloudflare domain here
     ],
     allow_credentials=True,
@@ -131,6 +133,8 @@ def health():
 
 @app.get("/", tags=["system"])
 def root():
+    if os.path.exists(frontend_dist):
+        return FileResponse(os.path.join(frontend_dist, "index.html"))
     return {
         "app":     settings.APP_NAME,
         "version": "1.0.0",
@@ -142,6 +146,13 @@ def root():
 # ─────────────────────────────────────────────────────────
 # Run
 # ─────────────────────────────────────────────────────────
+from fastapi.staticfiles import StaticFiles
+import os
+
+# Serve built React frontend
+frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
+if os.path.exists(frontend_dist):
+    app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
 
 if __name__ == "__main__":
     import uvicorn
